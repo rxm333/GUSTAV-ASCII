@@ -63,11 +63,10 @@ function setup() {
   video.pause();
   isPlaying = false;
 
-  // Load and autoplay background music
+  // Load background music (no autoplay due to browser policies)
   bgm = createAudio('assets/NewMoney.mp3');
   bgm.loop();
   bgm.volume(1.0);
-  // Do not play on load; start with button
   
   // Create play/pause button
   playPauseButton = createButton('Loading...');
@@ -162,7 +161,12 @@ function setup() {
 
 function draw() {
   // Only process if video is loaded and available
-  if (!video || video.width === 0 || video.height === 0) {
+  if (!video || !videoLoaded || video.width === 0 || video.height === 0) {
+    return;
+  }
+
+  // Additional check to ensure video element is ready
+  if (!video.elt || video.elt.readyState < 2) {
     return;
   }
   
@@ -188,8 +192,17 @@ function draw() {
   // Update font size and line height to maintain aspect ratio
   asciiDiv.style('font-size', fontSize + 'px');
   asciiDiv.style('line-height', (fontSize * 1.2) + 'px'); // Adjust line-height to maintain 16:9
-  
-  video.loadPixels();
+
+  // Safely load pixels with error handling
+  try {
+    video.loadPixels();
+    if (!video.pixels || video.pixels.length === 0) {
+      return;
+    }
+  } catch (error) {
+    console.warn('Error loading video pixels:', error);
+    return;
+  }
   let density;
   
   // Use custom density if selected, otherwise use predefined
