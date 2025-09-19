@@ -23,9 +23,9 @@ let videoWidth = 80, videoHeight = 45;
 let contrast = 1.0, brightness = 0;
 let playPauseButton;
 let isPlaying = false;
-let videoReady = false;
 let invertColors = true;
 let showColors = false;
+let videoLoaded = false;
 let invertCheckbox, colorCheckbox;
 let fontColorPicker, bgColorPicker;
 let customTextInput;
@@ -39,7 +39,7 @@ function setup() {
   controlsDiv.class('controls');
   
   // Load default video
-  video = createVideo('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4');
+  video = createVideo('assets/video.mp4');
   video.size(videoWidth, videoHeight);
   video.hide();
   video.loop();
@@ -48,15 +48,15 @@ function setup() {
     video.elt.setAttribute('playsinline','');
     video.elt.muted = true;
 
-    // Wait for video to be ready
-    video.elt.addEventListener('loadedmetadata', () => {
-      videoReady = true;
-      console.log('Video metadata loaded');
+    // Add event listeners for video loading
+    video.elt.addEventListener('loadeddata', () => {
+      videoLoaded = true;
+      playPauseButton.html('Play/Pause');
+      playPauseButton.removeAttribute('disabled');
     });
 
     video.elt.addEventListener('canplay', () => {
-      videoReady = true;
-      console.log('Video can play');
+      videoLoaded = true;
     });
   }
   video.volume(0);
@@ -70,7 +70,8 @@ function setup() {
   // Do not play on load; start with button
   
   // Create play/pause button
-  playPauseButton = createButton('Play / Pause');
+  playPauseButton = createButton('Loading...');
+  playPauseButton.attribute('disabled', '');
   playPauseButton.mousePressed(togglePlayPause);
   controlsDiv.child(playPauseButton);
   
@@ -160,8 +161,8 @@ function setup() {
 }
 
 function draw() {
-  // Only process if video is loaded and ready
-  if (!video || !videoReady || video.width === 0 || video.height === 0) {
+  // Only process if video is loaded and available
+  if (!video || video.width === 0 || video.height === 0) {
     return;
   }
   
@@ -273,7 +274,7 @@ function draw() {
 
 
 function togglePlayPause() {
-  if (video && videoReady) {
+  if (video && videoLoaded) {
     if (isPlaying) {
       video.pause();
       if (bgm) bgm.pause();
@@ -283,7 +284,5 @@ function togglePlayPause() {
       if (bgm) bgm.play();
       isPlaying = true;
     }
-  } else if (!videoReady) {
-    console.log('Video not ready yet, please wait...');
   }
 }
